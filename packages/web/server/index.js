@@ -40,6 +40,7 @@ import {
   readTerminalInputWsControlFrame,
 } from './lib/terminal/index.js';
 import webPush from 'web-push';
+import { startNacosDiscovery } from "./nacos.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14193,6 +14194,13 @@ async function main(options = {}) {
   const bindHost = typeof process.env.OPENCHAMBER_HOST === 'string' && process.env.OPENCHAMBER_HOST.trim().length > 0
     ? process.env.OPENCHAMBER_HOST.trim()
     : null;
+
+  // 在启动服务器前先注册到 Nacos  
+  try {
+    await startNacosDiscovery();
+  } catch (err) {
+    console.error("Nacos 注册过程中出错:", err);
+  }
 
   await new Promise((resolve, reject) => {
     const onError = (error) => {

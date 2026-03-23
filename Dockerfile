@@ -37,8 +37,8 @@ ENV NODE_ENV=production
 # Create openchamber user
 RUN useradd -m -s /bin/bash openchamber && mkdir -p /home/openchamber && chown -R openchamber:openchamber /home/openchamber
 
-# Switch to openchamber user
-USER openchamber
+# Install gosu for proper user switching
+RUN apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
 
 ENV NPM_CONFIG_PREFIX=/home/openchamber/.npm-global
 ENV PATH=${NPM_CONFIG_PREFIX}/bin:${PATH}

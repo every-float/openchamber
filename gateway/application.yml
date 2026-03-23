@@ -1,0 +1,19 @@
+server:
+  port: 52082
+
+spring:
+  application:
+    name: openchamber-gateway
+  cloud:
+    nacos:
+      discovery:
+        # 改为了宿主机IP，确保网关能连上Docker里的Nacos
+        # server-addr: 172.29.237.124:8848
+        server-addr: 192.168.140.26:8848
+    gateway:
+      discovery:
+        locator:
+          enabled: true # 开启自动根据服务名路由
+          lower-case-service-id: true # 强制服务名小写匹配
+          filters:
+            - StripPrefix=1 # 必须加这个，否则请求带路径发给后端还是 404

@@ -1,5 +1,5 @@
-#!/usr/bin/env sh
-set -eu
+#!/bin/sh  
+set -e 
 
 HOME="/home/openchamber"
 
@@ -9,6 +9,19 @@ export OPENCODE_CONFIG_DIR
 SSH_DIR="${HOME}/.ssh"
 SSH_PRIVATE_KEY_PATH="${SSH_DIR}/id_ed25519"
 SSH_PUBLIC_KEY_PATH="${SSH_PRIVATE_KEY_PATH}.pub"
+
+fix_permissions() {
+  if [ "$(id -u)" = "0" ]; then
+    echo "[entrypoint] fixing permissions..."
+    chown -R openchamber:openchamber "${HOME}/.config" 2>/dev/null || true
+    chown -R openchamber:openchamber "${HOME}/.local" 2>/dev/null || true
+    chown -R openchamber:openchamber "${SSH_DIR}" 2>/dev/null || true
+    chown -R openchamber:openchamber "${HOME}/workspaces" 2>/dev/null || true
+    chmod 700 "${SSH_DIR}" 2>/dev/null || true
+  fi
+}
+
+fix_permissions
 
 mkdir -p "${SSH_DIR}"
 if ! chmod 700 "${SSH_DIR}" 2>/dev/null; then
@@ -36,9 +49,9 @@ fi
 echo "[entrypoint] SSH public key:"
 cat "${SSH_PUBLIC_KEY_PATH}"
 
-# Handle UI password environment variable
 if [ -n "${UI_PASSWORD:-}" ]; then
   echo "[entrypoint] UI password set, enabling authentication"
+  export OPENCHAMBER_UI_PASSWORD="${UI_PASSWORD}"
 fi
 
 if [ "${OH_MY_OPENCODE:-false}" = "true" ]; then
@@ -57,14 +70,15 @@ fi
 
 echo "[entrypoint] starting..."
 
-if [ "$#" -gt 0 ]; then
+run_app() {
+  if [ "$(id -u)" = "0" ]; then
+    exec gosu openchamber "$@"
+  fi
   exec "$@"
+}
+
+if [ "$#" -gt 0 ]; then
+  run_app "$@"
 fi
 
-set -- bun packages/web/bin/cli.js
-if [ -n "${UI_PASSWORD:-}" ]; then
-  set -- "$@" --ui-password "$UI_PASSWORD"
-fi
-"$@"
-
-bun packages/web/bin/cli.js logs
+run_app bun packages/web/server/index.js --port 3000

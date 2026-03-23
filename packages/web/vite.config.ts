@@ -13,6 +13,7 @@ const reactScanToggle = (process.env.VITE_ENABLE_REACT_SCAN ?? '').toLowerCase()
 const enableReactScan = reactScanToggle === '1' || reactScanToggle === 'true' || reactScanToggle === 'on' || reactScanToggle === 'yes';
 
 export default defineConfig({
+  base: './',
   root: path.resolve(__dirname, '.'),
   plugins: [
     react({
